@@ -137,9 +137,9 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ type, range }) => {
   };
 
   const options = {
-    responsive: true,
+          responsive: true,
     maintainAspectRatio: false,
-    plugins: {
+          plugins: {
       legend: {
         display: false,
       },
@@ -168,17 +168,17 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ type, range }) => {
           }
         }
       }
-    },
-    scales: {
-      x: {
+          },
+          scales: {
+            x: {
         grid: {
           display: false,
         },
         ticks: {
           color: '#94a3b8',
         }
-      },
-      y: {
+            },
+            y: {
         grid: {
           color: 'rgba(203, 213, 225, 0.2)',
         },
@@ -199,9 +199,9 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ type, range }) => {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-      </div>
-    );
-  }
+    </div>
+  );
+} 
 
   return <Line data={chartData} options={options} height={300} />;
 };
