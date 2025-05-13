@@ -12,6 +12,8 @@ const nextConfig = {
   },
   // Increase timeout for page loading
   staticPageGenerationTimeout: 180,
+  // Disable SWC compiler and use Babel instead
+  swcMinify: false,
 }
 
 module.exports = nextConfig

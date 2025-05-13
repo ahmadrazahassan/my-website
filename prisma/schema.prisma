@@ -32,8 +32,22 @@ model User {
   media                Media[]
   supportTickets       SupportTicket[]
   ticketReplies        TicketReply[]
+  visitors             Visitor[]
 
   @@map("users")
+}
+
+model Admin {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        String   @default("ADMIN")
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admins")
 }
 
 model Session {
@@ -92,7 +106,8 @@ model Order {
   transactionReference String?
   paymentProofUrl   String?
   subtotal          Float?
-  total             Float
+  total             Float     @default(0)
+  totalAmount       Float?    @default(0)
   ipAddress         String?
   username          String?
   password          String?
@@ -212,4 +227,78 @@ model TicketReply {
 
   @@index([ticketId])
   @@index([createdAt])
+}
+
+model UserActivity {
+  hour                Int      @id
+  activityPercentage  Float
+  updatedAt           DateTime @default(now())
+
+  @@map("user_activities")
+}
+
+model TrafficSource {
+  source    String   @id
+  count     Int
+  updatedAt DateTime @default(now())
+
+  @@map("traffic_sources")
+}
+
+model Visitor {
+  id          String    @id @default(uuid())
+  userId      String?
+  sessionId   String
+  ipAddress   String
+  userAgent   String?
+  country     String?
+  device      String?
+  browser     String?
+  landingPage String?
+  visitDate   DateTime  @default(now())
+  
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@map("visitors")
+}
+
+model PageView {
+  id        String   @id @default(uuid())
+  page      String
+  url       String
+  timestamp DateTime @default(now())
+
+  @@map("page_views")
+}
+
+model Conversion {
+  id          String   @id @default(uuid())
+  date        DateTime @unique
+  attempts    Int
+  conversions Int
+
+  @@map("conversions")
+}
+
+model PageConversion {
+  id             String   @id @default(uuid())
+  pageName       String   @unique
+  conversionRate Float
+  attempts       Int
+  conversions    Int
+  updatedAt      DateTime @default(now())
+
+  @@map("page_conversions")
+}
+
+model Report {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  type        String?
+  fileUrl     String?
+  createdAt   DateTime  @default(now())
+  generatedAt DateTime?
+  
+  @@map("reports")
 }
