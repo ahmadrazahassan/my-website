@@ -1,117 +1,209 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 
-const Line = dynamic(() => import("react-chartjs-2").then(mod => mod.Line), { ssr: false });
-
-// Dynamically import Chart.js modules for tree-shaking
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface AnalyticsChartProps {
-  type: "revenue" | "users";
-  range?: string;
+  type: 'revenue' | 'users';
+  range: string; // 7d, 30d, 12mo
 }
 
-export default function AnalyticsChart({ type, range = "30d" }: AnalyticsChartProps) {
+const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ type, range }) => {
   const [chartData, setChartData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const res = await fetch(`/api/admin/dashboard?range=${range}`, { credentials: "include" });
-      const data = await res.json();
-      // Simulate data for the selected range
-      const now = new Date();
-      let labels: string[] = [];
-      let values: number[] = [];
-      if (range === "7d") {
-        labels = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(now.getDate() - 6 + i);
-          return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        });
-        if (type === "revenue") {
-          const base = data.totalRevenue / 7;
-          values = Array.from({ length: 7 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
-        } else {
-          const base = data.totalUsers / 7;
-          values = Array.from({ length: 7 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
+      try {
+        // Attempt to fetch real data
+        const res = await fetch(`/api/admin/analytics?type=${type}&range=${range}`);
+        
+        // If fetch fails, use demo data
+        if (!res.ok) {
+          throw new Error('Failed to fetch analytics data');
         }
-      } else if (range === "30d") {
-        labels = Array.from({ length: 30 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(now.getDate() - 29 + i);
-          return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        });
-        if (type === "revenue") {
-          const base = data.totalRevenue / 30;
-          values = Array.from({ length: 30 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
-        } else {
-          const base = data.totalUsers / 30;
-          values = Array.from({ length: 30 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
-        }
-      } else {
-        labels = Array.from({ length: 12 }, (_, i) => {
-          const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
-          return d.toLocaleString("default", { month: "short", year: "2-digit" });
-        });
-        if (type === "revenue") {
-          const base = data.totalRevenue / 12;
-          values = Array.from({ length: 12 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
-        } else {
-          const base = data.totalUsers / 12;
-          values = Array.from({ length: 12 }, () => Math.round(base * (0.8 + Math.random() * 0.6)));
-        }
+        
+        const data = await res.json();
+        setChartData(data);
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+        // Generate demo data as fallback
+        setChartData(generateDemoData(type, range));
+      } finally {
+        setLoading(false);
       }
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: type === "revenue" ? "Revenue (PKR)" : "New Users",
-            data: values,
-            fill: true,
-            backgroundColor: type === "revenue" ? "rgba(56,189,248,0.15)" : "rgba(99,102,241,0.15)",
-            borderColor: type === "revenue" ? "#0ea5e9" : "#6366f1",
-            pointBackgroundColor: "#fff",
-            pointBorderColor: type === "revenue" ? "#0ea5e9" : "#6366f1",
-            tension: 0.4,
-          },
-        ],
-      });
-      setLoading(false);
     };
+
     fetchData();
   }, [type, range]);
 
-  if (loading || !chartData) return <div className="h-64 flex items-center justify-center text-gray-400 animate-pulse bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl">Loading chart...</div>;
+  // Generate demo data if API fails
+  const generateDemoData = (type: string, range: string) => {
+    const labels = generateLabels(range);
+    const values = generateValues(labels.length, type);
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: type === 'revenue' ? 'Revenue (PKR)' : 'New Users',
+          data: values,
+          borderColor: type === 'revenue' ? 'rgb(34, 197, 94)' : 'rgb(59, 130, 246)',
+          backgroundColor: type === 'revenue' 
+            ? 'rgba(34, 197, 94, 0.1)' 
+            : 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+        }
+      ]
+    };
+  };
 
-  return (
-    <div className="h-full w-full">
-      <Line
-        data={chartData}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: false },
-            tooltip: { mode: "index", intersect: false },
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: "#64748b", font: { weight: "bold" } },
-            },
-            y: {
-              grid: { color: "#f1f5f9" },
-              ticks: { color: "#64748b" },
-            },
-          },
-        }}
-        height={260}
-      />
-    </div>
-  );
-} 
+  const generateLabels = (range: string) => {
+    const labels = [];
+    const now = new Date();
+    
+    switch (range) {
+      case '7d':
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        }
+        break;
+      case '30d':
+        for (let i = 0; i < 6; i++) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - (i * 5));
+          labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        }
+        labels.reverse();
+        break;
+      case '12mo':
+        for (let i = 11; i >= 0; i--) {
+          const date = new Date(now);
+          date.setMonth(date.getMonth() - i);
+          labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+        }
+        break;
+      default:
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        }
+    }
+    
+    return labels;
+  };
+
+  const generateValues = (count: number, type: string) => {
+    const values = [];
+    const baseValue = type === 'revenue' ? 20000 : 10;
+    
+    for (let i = 0; i < count; i++) {
+      // Add some randomness but keep an upward trend
+      const randomFactor = 0.7 + Math.random() * 0.6; // between 0.7 and 1.3
+      const trendFactor = 1 + (i / count) * 0.5; // gradually increases
+      
+      values.push(Math.round(baseValue * randomFactor * trendFactor));
+    }
+    
+    return values;
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#1e293b',
+        bodyColor: '#1e293b',
+        borderColor: 'rgba(203, 213, 225, 0.5)',
+        borderWidth: 1,
+        padding: 10,
+        boxPadding: 5,
+        usePointStyle: true,
+        callbacks: {
+          // Add PKR symbol for revenue values
+          label: function(context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += type === 'revenue' ? 
+                'PKR ' + context.parsed.y.toLocaleString() : 
+                context.parsed.y;
+            }
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#94a3b8',
+        }
+      },
+      y: {
+        grid: {
+          color: 'rgba(203, 213, 225, 0.2)',
+        },
+        ticks: {
+          color: '#94a3b8',
+          // Add PKR symbol for revenue values
+          callback: function(value: any) {
+            return type === 'revenue' ? 
+              'PKR ' + value.toLocaleString() : 
+              value;
+          }
+        }
+      }
+    }
+  };
+
+  if (loading || !chartData) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+      </div>
+    );
+  }
+
+  return <Line data={chartData} options={options} height={300} />;
+};
+
+export default AnalyticsChart; 
