@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
     
     // Process page views data by date
     const processedDates = new Map();
-    const pageViews = [];
-    const uniqueVisitors = [];
+    const pageViews: Array<{ date: string; count: number }> = [];
+    const uniqueVisitors: Array<{ date: string; count: number }> = [];
     
     // Initialize dates
     for (let i = 0; i < dayCount; i++) {
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    const totalOrderAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalOrderAmount = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
     const avgOrderValue = orders.length > 0 ? totalOrderAmount / orders.length : 0;
     
     // Fetch user activity by hour

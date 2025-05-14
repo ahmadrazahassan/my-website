@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getDashboardData } from '@/repositories/orderRepository';
 import { getUserStats } from '@/repositories/userRepository';
 import { verifyAdmin } from '@/lib/authUtils';
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   try {
     // Check authentication and authorization
     if (!await verifyAdmin(request)) {

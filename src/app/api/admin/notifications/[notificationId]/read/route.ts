@@ -34,8 +34,7 @@ export async function PUT(
         adminId
       },
       data: {
-        read: true,
-        updatedAt: new Date()
+        isRead: true
       }
     });
     
@@ -51,7 +50,7 @@ export async function PUT(
       id: notificationId,
       message: 'Notification marked as read'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error marking notification as read:', error);
     
     // Check if it's a Prisma error
