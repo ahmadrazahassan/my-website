@@ -1,0 +1,1 @@
+Removing .babelrc file to fix Vercel deployment issue with next/font
