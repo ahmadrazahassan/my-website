@@ -8,6 +8,9 @@ const nextConfig = {
     // Fix for "exports is not defined" error
     config.output.globalObject = 'globalThis';
     
+    // Disable terser minimizer
+    config.optimization.minimizer = [];
+    
     return config;
   },
   // Increase timeout for page loading
